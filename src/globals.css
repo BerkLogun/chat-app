@@ -1,0 +1,100 @@
+/* Typing indicator animation */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.typing-indicator span {
+  height: 8px;
+  width: 8px;
+  margin: 0 2px;
+  background-color: #606060;
+  border-radius: 50%;
+  display: inline-block;
+  opacity: 0.4;
+}
+
+.typing-indicator span:nth-child(1) {
+  animation: bounce 1.5s infinite 0.0s;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation: bounce 1.5s infinite 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation: bounce 1.5s infinite 0.4s;
+}
+
+/* Smaller typing indicator for sidebar */
+.typing-indicator-small {
+  display: flex;
+  align-items: center;
+}
+
+.typing-indicator-small span {
+  height: 4px;
+  width: 4px;
+  margin: 0 1px;
+  background-color: #3b82f6; /* blue-500 */
+  border-radius: 50%;
+  display: inline-block;
+  opacity: 0.7;
+}
+
+.typing-indicator-small span:nth-child(1) {
+  animation: bounce 1.5s infinite 0.0s;
+}
+
+.typing-indicator-small span:nth-child(2) {
+  animation: bounce 1.5s infinite 0.2s;
+}
+
+.typing-indicator-small span:nth-child(3) {
+  animation: bounce 1.5s infinite 0.4s;
+}
+
+@keyframes bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Dark mode adjustments */
+.dark .typing-indicator span {
+  background-color: #a0a0a0;
+}
+
+.dark .typing-indicator-small span {
+  background-color: #60a5fa; /* blue-400 */
+}
+
+/* Scrollbar styling */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(75, 85, 99, 0.5);
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.dark .scrollbar-thin {
+  scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+} 

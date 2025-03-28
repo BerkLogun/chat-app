@@ -1,8 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Real-Time Chat Application (Client)
+
+This is the client-side application for a modern real-time chat application built with Next.js and Socket.io.
+
+## Features
+
+- Real-time messaging with Socket.io
+- User authentication (login/register)
+- Private conversations
+- Group chats
+- Message read status
+- Online/offline user status
+
+## Technologies Used
+
+- Next.js 15
+- React 19
+- TypeScript
+- Socket.io Client
+- Zustand (State Management)
+- Tailwind CSS
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository
+2. Install dependencies:
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+3. Create a `.env.local` file in the root directory with the following content:
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
@@ -10,27 +47,37 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/app` - Next.js App Router pages
+- `/components` - Reusable UI components
+- `/lib` - Utility functions and API services
+  - `/api` - API service functions
+  - `/socket` - Socket.io configuration
+- `/store` - Zustand state management
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+Build the application for production:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run build
+# or
+yarn build
+# or
+pnpm build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Then start the production server:
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm start
+# or
+yarn start
+# or
+pnpm start
+```
