@@ -57,11 +57,11 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled = false }
   }, [message, onTypingChange, disabled]);
 
   return (
-    <div className="px-2 py-2 sm:px-4 sm:py-3 bg-white dark:bg-gray-800">
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
+    <div className="w-full px-2 py-2 sm:px-4 sm:py-3 bg-white dark:bg-gray-800">
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 w-full">
         <button 
           type="button" 
-          className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-none"
           disabled={disabled}
           aria-label="Attach file"
         >
@@ -77,7 +77,7 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled = false }
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder={disabled ? "Reconnecting..." : "Type a message..."}
-            className={`w-full rounded-full py-2.5 px-4 ${
+            className={`w-full rounded-full py-2 px-4 ${
               disabled ? 'bg-gray-100 dark:bg-gray-600 text-gray-400 dark:text-gray-500' : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
             } border-none focus:ring-2 focus:ring-blue-500 focus:outline-none text-base`}
             disabled={disabled}
@@ -88,7 +88,7 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled = false }
         <button 
           type="submit" 
           disabled={disabled || !message.trim()}
-          className={`p-2.5 rounded-full flex items-center justify-center ${
+          className={`p-2 rounded-full flex items-center justify-center flex-none ${
             message.trim() && !disabled 
               ? 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700' 
               : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'

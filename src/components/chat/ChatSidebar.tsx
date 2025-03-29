@@ -87,8 +87,7 @@ export function ChatSidebar({
   
   return (
     <div className={`
-      fixed md:relative inset-y-0 left-0 z-20 md:z-auto h-full 
-      w-[85%] sm:w-80 md:w-72 max-w-sm
+      md:static fixed top-0 bottom-0 left-0 z-20 w-[85%] sm:w-80 md:w-full h-full
       transform ${isVisible ? 'translate-x-0' : '-translate-x-full'} 
       md:translate-x-0 transition-transform duration-300 ease-in-out
       bg-white dark:bg-gray-800 shadow-lg flex flex-col

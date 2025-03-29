@@ -73,16 +73,18 @@ export default function ChatPage() {
   };
   
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-gray-900">
-      {/* Chat Sidebar */}
-      <ChatSidebar
-        rooms={rooms}
-        currentRoom={currentRoom}
-        onSelectRoom={handleRoomSelect}
-        isVisible={showSidebar}
-        onClose={() => setShowSidebar(false)}
-        onOpenSettings={handleOpenSettings}
-      />
+    <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 flex">
+      {/* Chat Sidebar - Using relative positioning for desktop to allow interactions */}
+      <div className="md:relative md:w-72 flex-shrink-0">
+        <ChatSidebar
+          rooms={rooms}
+          currentRoom={currentRoom}
+          onSelectRoom={handleRoomSelect}
+          isVisible={showSidebar}
+          onClose={() => setShowSidebar(false)}
+          onOpenSettings={handleOpenSettings}
+        />
+      </div>
       
       {/* Overlay when sidebar is shown on mobile */}
       {showSidebar && isMobile && (
@@ -93,24 +95,20 @@ export default function ChatPage() {
       )}
       
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col w-full h-full">
+      <div className="flex-1 relative">
         {currentRoom ? (
           <>
-            <ChatHeader
-              room={currentRoom}
-              onMenuClick={toggleSidebar}
-              onProfileClick={handleOpenSettings}
-            />
-            
-            <div className="flex-1 overflow-hidden">
-              <MessageList
-                messages={messages}
-                typingIndicator={typingIndicator}
-                currentUserId={user?._id || ''}
+            {/* Fixed position header - fixed at top */}
+            <div className="fixed top-0 right-0 left-0 md:left-72 z-10 shadow-sm">
+              <ChatHeader
+                room={currentRoom}
+                onMenuClick={toggleSidebar}
+                onProfileClick={handleOpenSettings}
               />
             </div>
             
-            <div className="border-t border-gray-200 dark:border-gray-700">
+            {/* Fixed position message input - fixed at bottom */}
+            <div className="fixed bottom-0 right-0 left-0 md:left-72 z-10 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
               <MessageInput
                 onSendMessage={handleSendMessage}
                 onTypingChange={handleTypingChange}
@@ -129,10 +127,30 @@ export default function ChatPage() {
                 </div>
               )}
             </div>
+            
+            {/* Scrollable Message Area - positioned between header and footer */}
+            <div className="fixed top-[56px] bottom-[60px] right-0 left-0 md:left-72">
+              <MessageList
+                messages={messages}
+                typingIndicator={typingIndicator}
+                currentUserId={user?._id || ''}
+              />
+            </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center p-4 text-center text-gray-500 dark:text-gray-400">
+          <div className="fixed inset-0 md:left-72 flex items-center justify-center p-4 text-center text-gray-500 dark:text-gray-400">
             <div className="max-w-md w-full">
+              <div className="absolute top-4 left-4 md:hidden">
+                <button 
+                  className="p-2 rounded-md bg-white dark:bg-gray-800 shadow-md text-gray-700 dark:text-gray-300"
+                  onClick={toggleSidebar}
+                  aria-label="Open menu"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              </div>
               <h3 className="text-xl font-semibold mb-2">Welcome to Chat</h3>
               <p className="mb-4">Select a conversation or start a new one</p>
               

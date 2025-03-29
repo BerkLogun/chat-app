@@ -40,14 +40,14 @@ export function ChatHeader({ room, onMenuClick, onProfileClick }: ChatHeaderProp
     : (room.type === 'private' ? 'Private conversation' : `${room.participants.length} members`);
 
   return (
-    <div className="py-2 px-3 sm:py-3 sm:px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-sm">
+    <div className="py-2 px-3 sm:py-3 sm:px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-sm flex-shrink-0 w-full">
       <div className="flex items-center">
         <button 
-          className="md:hidden mr-2 sm:mr-3 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+          className="md:hidden mr-2 sm:mr-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors"
           onClick={onMenuClick}
           aria-label="Toggle menu"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
@@ -72,7 +72,7 @@ export function ChatHeader({ room, onMenuClick, onProfileClick }: ChatHeaderProp
       
       <div className="flex items-center">
         <button 
-          className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="p-2 text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           onClick={onProfileClick}
           aria-label="Profile settings"
         >
