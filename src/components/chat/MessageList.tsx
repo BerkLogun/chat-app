@@ -2,32 +2,30 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Message } from '@/lib/api/chat';
-import { User } from '@/store/auth';
-import { formatTime, getInitials } from '@/lib/utils';
+import {
+  DateHeader,
+  MessageItem,
+  TypingIndicator,
+  EmptyState
+} from './utils';
 
 interface MessageListProps {
   messages: Message[];
-  currentUser: User | null;
-  typingUsers?: string[];
+  currentUserId: string;
+  typingIndicator?: string;
 }
 
-export function MessageList({ messages, currentUser, typingUsers = [] }: MessageListProps) {
+// Main MessageList component
+export function MessageList({ messages, currentUserId, typingIndicator }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom when messages change or when typing status changes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, typingUsers]);
+  }, [messages, typingIndicator]);
 
-  if (messages.length === 0 && typingUsers.length === 0) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center p-6 bg-gray-100 dark:bg-gray-800 rounded-lg">
-          <p className="text-gray-500 dark:text-gray-400">No messages yet</p>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Start the conversation</p>
-        </div>
-      </div>
-    );
+  if (messages.length === 0 && !typingIndicator) {
+    return <EmptyState />;
   }
 
   // Group messages by date
@@ -52,24 +50,16 @@ export function MessageList({ messages, currentUser, typingUsers = [] }: Message
   const messageGroups = groupMessagesByDate();
 
   return (
-    <div className="h-full w-full overflow-y-auto py-4 px-4 md:px-6 scrollbar-thin">
-      <div className="flex flex-col space-y-6">
-        {messageGroups.map((group, groupIndex) => (
-          <div key={group.date} className="space-y-4">
-            <div className="flex justify-center my-2">
-              <div className="px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300">
-                {group.date === new Date().toLocaleDateString() ? 'Today' : group.date}
-              </div>
-            </div>
+    <div className="h-full w-full overflow-y-auto py-2 sm:py-4 px-2 sm:px-4 md:px-6 scrollbar-thin">
+      <div className="flex flex-col space-y-4 sm:space-y-6">
+        {messageGroups.map((group) => (
+          <div key={group.date} className="space-y-3 sm:space-y-4">
+            <DateHeader date={group.date} />
             
             {group.messages.map((message, index) => {
-              // Check if the message is from the current user
-              const currentUserId = currentUser?._id;
-              const messageSenderId = typeof message.sender === 'object' ? message.sender._id : message.sender;
-              const isCurrentUserMessage = currentUserId && String(messageSenderId) === String(currentUserId);
-              
               // Check if next message is from same sender (for grouping bubbles)
               const nextMessage = group.messages[index + 1];
+              const messageSenderId = typeof message.sender === 'object' ? message.sender._id : message.sender;
               const isSameSenderAsNext = nextMessage && 
                 String(typeof nextMessage.sender === 'object' && nextMessage.sender !== null && '_id' in nextMessage.sender ? 
                   nextMessage.sender._id : nextMessage.sender) === 
@@ -83,90 +73,24 @@ export function MessageList({ messages, currentUser, typingUsers = [] }: Message
                 String(messageSenderId);
 
               return (
-                <div
+                <MessageItem
                   key={message._id}
-                  className={`flex w-full ${isCurrentUserMessage ? 'justify-end' : 'justify-start'} ${isSameSenderAsPrev ? 'mt-1' : 'mt-4'}`}
-                >
-                  {!isCurrentUserMessage && !isSameSenderAsPrev && (
-                    <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white mr-2 self-end">
-                      {typeof message.sender === 'object' && message.sender !== null && 'username' in message.sender
-                        ? getInitials(message.sender.username)
-                        : getInitials('Other')}
-                    </div>
-                  )}
-                  
-                  {!isCurrentUserMessage && isSameSenderAsPrev && (
-                    <div className="w-8 mr-2"></div>
-                  )}
-                  
-                  <div className={`max-w-[75%] flex flex-col ${isCurrentUserMessage ? 'items-end' : 'items-start'}`}>
-                    <div
-                      className={`px-3 py-2 rounded-2xl ${
-                        isCurrentUserMessage 
-                          ? 'bg-blue-500 text-white rounded-br-none' 
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none'
-                      } ${isSameSenderAsPrev && isCurrentUserMessage ? 'rounded-tr-md' : ''}
-                      ${isSameSenderAsPrev && !isCurrentUserMessage ? 'rounded-tl-md' : ''}
-                      ${isSameSenderAsNext && isCurrentUserMessage ? 'rounded-br-md' : ''}
-                      ${isSameSenderAsNext && !isCurrentUserMessage ? 'rounded-bl-md' : ''}`
-                      }
-                    >
-                      <p className="whitespace-pre-wrap break-words text-sm">
-                        {message.content}
-                      </p>
-                    </div>
-                    
-                    {!isSameSenderAsNext && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 mx-1">
-                        {formatTime(message.createdAt)}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {isCurrentUserMessage && !isSameSenderAsPrev && (
-                    <div className="flex-shrink-0 h-8 w-8 rounded-full bg-green-500 flex items-center justify-center text-white ml-2 self-end">
-                      {getInitials(currentUser?.username || 'Me')}
-                    </div>
-                  )}
-                  
-                  {isCurrentUserMessage && isSameSenderAsPrev && (
-                    <div className="w-8 ml-2"></div>
-                  )}
-                </div>
+                  message={message}
+                  currentUserId={currentUserId}
+                  isSameSenderAsPrev={isSameSenderAsPrev}
+                  isSameSenderAsNext={isSameSenderAsNext}
+                />
               );
             })}
           </div>
         ))}
         
         {/* Typing indicator */}
-        {typingUsers.length > 0 && (
-          <div className="flex w-full justify-start mt-2">
-            <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white mr-2 self-end">
-              <span className="text-xs">...</span>
-            </div>
-            
-            <div className="flex flex-col items-start">
-              <div className="px-3 py-2 rounded-2xl bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none">
-                <div className="flex items-center">
-                  <div className="typing-indicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                  <p className="ml-2 text-xs">
-                    {typingUsers.length === 1 
-                      ? `${typingUsers[0]} is typing...` 
-                      : typingUsers.length === 2 
-                        ? `${typingUsers[0]} and ${typingUsers[1]} are typing...` 
-                        : `${typingUsers.length} people are typing...`}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+        {typingIndicator && (
+          <TypingIndicator username={typingIndicator} />
         )}
         
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-2" />
       </div>
     </div>
   );

@@ -17,13 +17,16 @@ export function StatusIndicator({ status, size = 'md', className = '' }: StatusI
   
   const statusColorClasses = {
     online: 'bg-green-500',
-    away: 'bg-yellow-500',
-    offline: 'bg-gray-500',
+    away: 'bg-amber-500',
+    offline: 'bg-gray-400',
   };
+  
+  // Only add ring and shadow if no custom className is provided to override them
+  const ringClasses = className.includes('ring-0') ? '' : 'ring-2 ring-white dark:ring-gray-800 shadow-sm';
   
   return (
     <span 
-      className={`inline-block rounded-full ${sizeClasses[size]} ${statusColorClasses[status]} ${className}`}
+      className={`inline-block rounded-full ${sizeClasses[size]} ${statusColorClasses[status]} ${ringClasses} ${className}`}
       aria-label={`Status: ${status}`}
     />
   );

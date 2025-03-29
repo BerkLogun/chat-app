@@ -145,24 +145,24 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   if (!user) return null;
   
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="User Settings">
+    <Modal isOpen={isOpen} onClose={onClose} title="Profile Settings">
       <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex -mb-px">
           <button
-            className={`mr-4 py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`mr-4 py-2 px-3 sm:px-4 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'profile'
                 ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
             onClick={() => setActiveTab('profile')}
           >
             Profile
           </button>
           <button
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-2 px-3 sm:px-4 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'password'
                 ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
             onClick={() => setActiveTab('password')}
           >
@@ -172,50 +172,52 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       </div>
       
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+        <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-sm">
           {error}
         </div>
       )}
       
       {success && (
-        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+        <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg text-sm">
           {success}
         </div>
       )}
       
       {activeTab === 'profile' && (
-        <form onSubmit={handleProfileSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1" htmlFor="email">
+        <form onSubmit={handleProfileSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300" htmlFor="email">
               Email
             </label>
-            <Input
+            <input
               id="email"
               name="email"
               type="email"
               value={user.email}
               disabled
-              className="opacity-70"
+              className="w-full px-3 py-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600"
+              readOnly
             />
-            <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">Email cannot be changed</p>
           </div>
           
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1" htmlFor="username">
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300" htmlFor="username">
               Username
             </label>
-            <Input
+            <input
               id="username"
               name="username"
               type="text"
               value={formData.username}
               onChange={handleProfileChange}
-              required
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="Enter your username"
             />
           </div>
           
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-1" htmlFor="status">
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300" htmlFor="status">
               Status
             </label>
             <div className="relative">
@@ -224,92 +226,101 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                 name="status"
                 value={formData.status}
                 onChange={handleProfileChange}
-                className="w-full px-3 py-2 pl-9 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none"
+                className="w-full appearance-none px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all pr-8"
               >
-                {statusOptions.map((option) => (
-                  <option 
-                    key={option.value} 
-                    value={option.value}
-                  >
+                {statusOptions.map(option => (
+                  <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <StatusIndicator status={formData.status as 'online' | 'offline' | 'away'} />
-              </div>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
               </div>
             </div>
+            <div className="flex items-center mt-2 text-sm text-gray-600 dark:text-gray-400">
+              <StatusIndicator status={formData.status as 'online' | 'offline' | 'away'} className="mr-2" />
+              <span>Others will see you as {formData.status}</span>
+            </div>
           </div>
           
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-2">
             <Button
               type="submit"
+              variant="default"
+              isLoading={isLoading}
               disabled={isLoading}
+              className="w-full sm:w-auto"
             >
-              {isLoading ? 'Updating...' : 'Update Profile'}
+              Save Profile
             </Button>
           </div>
         </form>
       )}
       
       {activeTab === 'password' && (
-        <form onSubmit={handlePasswordSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1" htmlFor="currentPassword">
+        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300" htmlFor="currentPassword">
               Current Password
             </label>
-            <Input
+            <input
               id="currentPassword"
               name="currentPassword"
               type="password"
               value={passwordData.currentPassword}
               onChange={handlePasswordChange}
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="Enter your current password"
               required
             />
           </div>
           
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1" htmlFor="newPassword">
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300" htmlFor="newPassword">
               New Password
             </label>
-            <Input
+            <input
               id="newPassword"
               name="newPassword"
               type="password"
               value={passwordData.newPassword}
               onChange={handlePasswordChange}
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="Enter new password"
               required
               minLength={6}
             />
-            <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters long</p>
           </div>
           
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-1" htmlFor="confirmPassword">
-              Confirm New Password
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300" htmlFor="confirmPassword">
+              Confirm Password
             </label>
-            <Input
+            <input
               id="confirmPassword"
               name="confirmPassword"
               type="password"
               value={passwordData.confirmPassword}
               onChange={handlePasswordChange}
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="Confirm new password"
               required
               minLength={6}
             />
           </div>
           
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-2">
             <Button
               type="submit"
+              variant="default"
+              isLoading={isLoading}
               disabled={isLoading}
+              className="w-full sm:w-auto"
             >
-              {isLoading ? 'Updating...' : 'Change Password'}
+              Update Password
             </Button>
           </div>
         </form>

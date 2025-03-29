@@ -4,95 +4,81 @@ import React from 'react';
 import { ChatRoom } from '@/lib/api/chat';
 import { getInitials } from '@/lib/utils';
 import { useAuth } from '@/store/AuthProvider';
-import Link from 'next/link';
 import { StatusIndicator } from '@/components/StatusIndicator';
+import { formatChatRoomName } from '@/features/chat/utils';
 
 interface ChatHeaderProps {
   room: ChatRoom;
-  onMenuClick?: () => void;
-  isMobile?: boolean;
+  onMenuClick: () => void;
+  onProfileClick: () => void;
 }
 
-export function ChatHeader({ room, onMenuClick, isMobile }: ChatHeaderProps) {
+export function ChatHeader({ room, onMenuClick, onProfileClick }: ChatHeaderProps) {
   const { user } = useAuth();
   
-  // Get the other participant data for private chats
-  const getParticipantData = () => {
-    if (room.type === 'private') {
-      // Find other participant
-      const otherParticipant = room.participants.find(p => {
-        if (typeof p === 'object' && p !== null && '_id' in p) {
-          return p._id !== user?._id;
-        }
-        return false;
-      });
-      
-      if (otherParticipant && typeof otherParticipant === 'object' && 'username' in otherParticipant) {
-        return {
-          username: otherParticipant.username,
-          status: otherParticipant.status as 'online' | 'offline' | 'away' || 'offline',
-          userId: typeof otherParticipant._id === 'string' ? otherParticipant._id : otherParticipant._id.toString()
-        };
-      }
+  // Get participant status for direct chats
+  const getParticipantStatus = (): 'online' | 'offline' | 'away' | null => {
+    if (!room || room.type !== 'private') return null;
+    
+    // Find the other participant
+    const otherParticipant = room.participants?.find(p => {
+      const id = typeof p === 'object' ? p._id : p;
+      return id !== user?._id;
+    });
+    
+    if (otherParticipant && typeof otherParticipant === 'object' && 'status' in otherParticipant) {
+      return otherParticipant.status as 'online' | 'offline' | 'away';
     }
-    return {
-      username: room.name,
-      status: null,
-      userId: room._id
-    };
+    
+    return 'offline';
   };
   
-  const { username: displayName, status, userId } = getParticipantData();
-  const statusText = status || (room.type === 'private' ? 'Private conversation' : `${room.participants.length} members`);
-  
-  // Create a key that will change when participant status changes
-  const headerKey = `header-${userId}-${status}`;
+  const roomName = user?._id ? formatChatRoomName(room, user._id) : room.name || 'Chat';
+  const status = getParticipantStatus();
+  const statusText = status 
+    ? status.charAt(0).toUpperCase() + status.slice(1) 
+    : (room.type === 'private' ? 'Private conversation' : `${room.participants.length} members`);
 
   return (
-    <div className="py-3 px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between" key={headerKey}>
+    <div className="py-2 px-3 sm:py-3 sm:px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-sm">
       <div className="flex items-center">
-        {isMobile && (
-          <button 
-            className="md:hidden mr-3 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            onClick={onMenuClick}
-            aria-label="Toggle menu"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        )}
-        <div className="flex-shrink-0 h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center text-white">
-          {room.type === 'private' ? (
-            getInitials(displayName)
-          ) : (
-            <span className="text-xs">Group</span>
+        <button 
+          className="md:hidden mr-2 sm:mr-3 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+          onClick={onMenuClick}
+          aria-label="Toggle menu"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div className="relative flex-shrink-0">
+          <div className="flex-shrink-0 h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-md">
+            {getInitials(roomName)}
+          </div>
+          {status && (
+            <div className="absolute -bottom-0.5 -right-0.5 ring-2 ring-white dark:ring-gray-800">
+              <StatusIndicator status={status} size="md" />
+            </div>
           )}
         </div>
-        <div className="ml-3">
-          <h3 className="font-medium">{displayName}</h3>
-          <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
-            {status && <StatusIndicator status={status} size="sm" />}
-            <span>{statusText}</span>
+        <div className="ml-2 sm:ml-3 min-w-0">
+          <h3 className="font-medium text-gray-900 dark:text-white truncate text-sm sm:text-base">{roomName}</h3>
+          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+            {status && <div className="w-2 h-2 rounded-full bg-transparent mr-1.5" />}
+            <span className="truncate max-w-[150px] sm:max-w-[200px]">{statusText}</span>
           </div>
         </div>
       </div>
       
-      <div className="flex items-center space-x-2">
-        <button className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
-        <Link href="/profile" className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <div className="flex items-center">
+        <button 
+          className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          onClick={onProfileClick}
+          aria-label="Profile settings"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </Link>
-        <button className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
           </svg>
         </button>
       </div>
