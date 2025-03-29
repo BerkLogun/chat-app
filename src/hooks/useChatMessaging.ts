@@ -53,17 +53,17 @@ export function useChatMessaging() {
       });
       
       // Only add to current room's messages if we're viewing that room
-      if (currentRoom && message.roomId === currentRoom._id) {
+      if (currentRoom && message.chatRoom === currentRoom._id) {
         console.log('Message is for current room, adding to messages list');
         
         // Normalize the message for consistent display
         const normalizedMessage = {
           ...message,
-          // Ensure message has consistent sender format
-          sender: typeof message.sender === 'object' && message.sender?._id
-            ? message.sender._id
-            : message.sender
+          // Ensure message has roomId field (some parts of UI might expect this)
+          roomId: message.chatRoom
         };
+        
+        console.log('Adding normalized message to room:', normalizedMessage);
         
         // Add the message to the chat
         addMessage(normalizedMessage);

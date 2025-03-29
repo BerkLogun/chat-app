@@ -67,8 +67,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } else if (!messageExists) {
       console.log('Message is new, adding to store');
       
+      // Ensure consistent roomId/chatRoom fields 
+      const normalizedMessage = {
+        ...message,
+        // Make sure we have both fields for consistent access
+        roomId: message.roomId || message.chatRoom || '',
+        chatRoom: message.chatRoom || message.roomId || ''
+      };
+      
       // Make sure we sort by timestamp if available
-      let updatedMessages = [...currentMessages, message];
+      let updatedMessages = [...currentMessages, normalizedMessage];
       
       // Sort messages by createdAt if available
       if (message.createdAt) {

@@ -22,7 +22,8 @@ export default function ChatPage() {
     typingUsers, 
     handleSendMessage, 
     handleTypingChange, 
-    handleSelectRoom 
+    handleSelectRoom,
+    refreshMessages
   } = useChatMessaging();
   
   const [showSidebar, setShowSidebar] = useState(false);
@@ -83,6 +84,7 @@ export default function ChatPage() {
           isVisible={showSidebar}
           onClose={() => setShowSidebar(false)}
           onOpenSettings={handleOpenSettings}
+          typingUsers={typingUsers}
         />
       </div>
       
@@ -134,6 +136,7 @@ export default function ChatPage() {
                 messages={messages}
                 typingIndicator={typingIndicator}
                 currentUserId={user?._id || ''}
+                onRefreshNeeded={refreshMessages}
               />
             </div>
           </>

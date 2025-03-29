@@ -52,6 +52,7 @@ export interface ChatRoom {
 export interface Message {
   _id: string;
   roomId: string;
+  chatRoom?: string;
   content: string;
   sender: string | { _id: string; username?: string; email?: string; avatar?: string };
   readBy: string[];

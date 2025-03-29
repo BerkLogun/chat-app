@@ -18,6 +18,7 @@ interface ChatSidebarProps {
   isVisible: boolean;
   onClose: () => void;
   onOpenSettings: () => void;
+  typingUsers?: {[roomId: string]: {[userId: string]: {username: string, timestamp: number}}};
 }
 
 export function ChatSidebar({ 
@@ -26,7 +27,8 @@ export function ChatSidebar({
   onSelectRoom, 
   isVisible, 
   onClose,
-  onOpenSettings
+  onOpenSettings,
+  typingUsers = {}
 }: ChatSidebarProps) {
   const { user, logout } = useAuth();
   const [isCreatingChat, setIsCreatingChat] = useState(false);
@@ -83,6 +85,22 @@ export function ChatSidebar({
     }
     
     return 'offline';
+  };
+  
+  // Check if someone is typing in this room
+  const isTypingInRoom = (roomId: string): string | null => {
+    if (!typingUsers[roomId]) return null;
+    
+    const typingUserIds = Object.keys(typingUsers[roomId]);
+    if (typingUserIds.length === 0) return null;
+    
+    // Don't show typing indicator for current user
+    const otherTypingUserIds = typingUserIds.filter(id => id !== user?._id);
+    if (otherTypingUserIds.length === 0) return null;
+    
+    // Get the username of the first typing user
+    const typingUserId = otherTypingUserIds[0];
+    return typingUsers[roomId][typingUserId]?.username || null;
   };
   
   return (
@@ -234,7 +252,18 @@ export function ChatSidebar({
                             ? 'font-semibold text-gray-900 dark:text-gray-100' 
                             : 'text-gray-500 dark:text-gray-400'
                         }`}>
-                          {room.lastMessage?.content ? truncateText(room.lastMessage.content, 30) : 'No messages yet'}
+                          {isTypingInRoom(room._id) 
+                            ? <span className="flex items-center text-blue-500 dark:text-blue-400 font-normal animate-pulse">
+                                <span className="mr-1">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                                  </svg>
+                                </span>
+                                {isTypingInRoom(room._id)} is typing...
+                              </span>
+                            : room.lastMessage?.content 
+                              ? truncateText(room.lastMessage.content, 30) 
+                              : 'No messages yet'}
                         </p>
                         
                         {unread && (

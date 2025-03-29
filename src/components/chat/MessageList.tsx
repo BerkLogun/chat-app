@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Message } from '@/lib/api/chat';
 import {
   DateHeader,
@@ -13,19 +13,48 @@ interface MessageListProps {
   messages: Message[];
   currentUserId: string;
   typingIndicator?: string;
+  onRefreshNeeded?: () => void;
 }
 
 // Main MessageList component
-export function MessageList({ messages, currentUserId, typingIndicator }: MessageListProps) {
+export function MessageList({ messages, currentUserId, typingIndicator, onRefreshNeeded }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Only run client-side to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Handle visibility change (for mobile devices being locked/unlocked)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('App became visible again, refreshing messages');
+        onRefreshNeeded?.();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [onRefreshNeeded]);
 
   // Scroll to bottom when messages change or when typing status changes
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
+    console.log('MessageList received update with', messages.length, 'messages');
   }, [messages, typingIndicator]);
+
+  // Return empty div during SSR to prevent hydration issues
+  if (!isMounted) {
+    return <div className="h-full w-full"></div>;
+  }
 
   if (messages.length === 0 && !typingIndicator) {
     return <EmptyState />;
