@@ -60,9 +60,11 @@ export interface Message {
 
 export const chatService = {
   // Get all chat rooms for the current user
-  getRooms: async () => {
+  getRooms: async (forceRefresh = false) => {
     try {
-      const response = await chatApi.get('/rooms');
+      // Add timestamp to force fresh data
+      const timestamp = forceRefresh ? `?t=${Date.now()}` : '';
+      const response = await chatApi.get(`/rooms${timestamp}`);
       return response.data;
     } catch (error) {
       console.error('Failed to fetch chat rooms:', error);

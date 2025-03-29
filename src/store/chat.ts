@@ -20,7 +20,7 @@ interface ChatState {
   setError: (error: string | null) => void;
   
   // Async actions
-  fetchRooms: () => Promise<void>;
+  fetchRooms: (forceRefresh?: boolean) => Promise<void>;
   fetchMessages: (roomId: string) => Promise<void>;
   sendMessage: (roomId: string, content: string) => Promise<void>;
   markAsRead: (roomId: string) => Promise<void>;
@@ -87,11 +87,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setError: (error) => set({ error }),
   
   // Asynchronous actions
-  fetchRooms: async () => {
+  fetchRooms: async (forceRefresh = false) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await chatService.getRooms();
-      console.log('Fetched chat rooms:', response);
+      const response = await chatService.getRooms(forceRefresh);
+      console.log('Fetched chat rooms with forceRefresh=', forceRefresh, response);
       
       // Process chat rooms to handle various lastMessage formats
       const normalizedChatRooms = (response.chatRooms || []).map((room: any) => {

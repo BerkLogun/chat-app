@@ -8,6 +8,7 @@ import { useChatStore } from '@/store/chat';
 import Link from 'next/link';
 import { User } from '@/store/auth';
 import { getInitials, truncateText, getRelativeTime } from '@/lib/utils';
+import { StatusIndicator } from '@/components/StatusIndicator';
 
 interface ChatSidebarProps {
   rooms: ChatRoom[];
@@ -15,9 +16,28 @@ interface ChatSidebarProps {
   onSelectRoom: (room: ChatRoom) => void;
   onClose?: () => void;
   typingUsers?: {[roomId: string]: string[]};
+  onOpenProfileModal: () => void;
 }
 
-export function ChatSidebar({ rooms, currentRoom, onSelectRoom, onClose, typingUsers = {} }: ChatSidebarProps) {
+// For the room participants in the room list items
+const getParticipantStatus = (room: ChatRoom, currentUserId: string) => {
+  if (room.type === 'private') {
+    // Find other participant
+    const otherParticipant = room.participants.find(p => {
+      if (typeof p === 'object' && p !== null && '_id' in p) {
+        return p._id !== currentUserId;
+      }
+      return false;
+    });
+    
+    if (otherParticipant && typeof otherParticipant === 'object' && 'status' in otherParticipant) {
+      return otherParticipant.status as 'online' | 'offline' | 'away';
+    }
+  }
+  return 'offline' as const;
+};
+
+export function ChatSidebar({ rooms, currentRoom, onSelectRoom, onClose, typingUsers = {}, onOpenProfileModal }: ChatSidebarProps) {
   const { user, logout } = useAuth();
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -149,10 +169,13 @@ export function ChatSidebar({ rooms, currentRoom, onSelectRoom, onClose, typingU
             {rooms.map((room) => {
               const isTyping = typingUsers[room._id]?.length > 0;
               const isActive = currentRoom?._id === room._id;
+              // Derive a status key to help with re-rendering when statuses change
+              const otherParticipantStatus = getParticipantStatus(room, user?._id || '');
+              const statusKey = `${room._id}-${otherParticipantStatus}`;
               
               return (
                 <div
-                  key={room._id}
+                  key={statusKey}
                   className={`p-2 rounded-lg cursor-pointer transition-colors ${
                     isActive
                       ? 'bg-blue-50 dark:bg-blue-900/30'
@@ -215,6 +238,34 @@ export function ChatSidebar({ rooms, currentRoom, onSelectRoom, onClose, typingU
                           </span>
                         )}
                       </div>
+                      {room.type === 'private' && (
+                        <div className="flex items-center space-x-1 mb-1">
+                          {(() => {
+                            // Find other participant for status
+                            const otherParticipant = room.participants.find(p => {
+                              if (typeof p === 'object' && p !== null && '_id' in p) {
+                                return p._id !== user?._id;
+                              }
+                              return false;
+                            });
+                            
+                            if (otherParticipant && typeof otherParticipant === 'object' && 'status' in otherParticipant) {
+                              return (
+                                <>
+                                  <StatusIndicator 
+                                    status={otherParticipant.status as 'online' | 'offline' | 'away'} 
+                                    size="sm" 
+                                  />
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                                    {otherParticipant.status}
+                                  </span>
+                                </>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      )}
                       <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                         {isTyping ? (
                           <span className="text-blue-500 dark:text-blue-400 flex items-center">
@@ -265,16 +316,22 @@ export function ChatSidebar({ rooms, currentRoom, onSelectRoom, onClose, typingU
             </div>
             <div className="ml-3 min-w-0">
               <p className="font-medium truncate">{user?.username}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.status || 'Online'}</p>
+              <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
+                <StatusIndicator status={user?.status || 'online'} size="sm" />
+                <span className="truncate capitalize">{user?.status || 'Online'}</span>
+              </div>
             </div>
           </div>
           <div className="flex space-x-1">
-            <Link href="/profile" className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <button
+              onClick={onOpenProfileModal}
+              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-            </Link>
+            </button>
             <button onClick={handleLogout} className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

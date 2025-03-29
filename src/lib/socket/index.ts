@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth';
 let socket: Socket | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
+let autoReconnectInterval: NodeJS.Timeout | null = null;
 
 // Debug logger for socket events
 const logSocketEvent = (event: string, data?: any) => {
@@ -59,19 +60,19 @@ export const initializeSocket = () => {
           namespace: '/'
         });
         reconnectAttempts = 0;
+        // Clear any auto reconnect interval
+        if (autoReconnectInterval) {
+          clearInterval(autoReconnectInterval);
+          autoReconnectInterval = null;
+        }
       });
       
       socket.on('disconnect', (reason) => {
         logSocketEvent('DISCONNECTED', { reason });
         
-        if (reason === 'io server disconnect') {
-          setTimeout(() => {
-            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-              reconnectAttempts++;
-              logSocketEvent('MANUAL RECONNECT ATTEMPT', { attempt: reconnectAttempts });
-              socket?.connect();
-            }
-          }, 1000);
+        if (reason === 'io server disconnect' || reason === 'transport close' || reason === 'transport error') {
+          // Server closed the connection or connection lost, try to reconnect
+          startAutoReconnect();
         }
       });
       
@@ -90,6 +91,9 @@ export const initializeSocket = () => {
           logSocketEvent('MAX_RECONNECT_ATTEMPTS_REACHED');
           socket?.disconnect();
           socket = null;
+          
+          // Start automatic reconnection after regular attempts fail
+          startAutoReconnect();
         }
       });
       
@@ -114,6 +118,9 @@ export const initializeSocket = () => {
       socket.io.on('reconnect_failed', () => {
         logSocketEvent('RECONNECT_FAILED');
         socket = null;
+        
+        // Start automatic reconnection after socket.io reconnection fails
+        startAutoReconnect();
       });
       
       socket.io.on('reconnect', (attemptNumber) => {
@@ -136,6 +143,41 @@ export const initializeSocket = () => {
   return socket;
 };
 
+// Start our own auto-reconnect system if the socket.io one fails
+const startAutoReconnect = () => {
+  if (autoReconnectInterval) return; // Already trying to reconnect
+  
+  logSocketEvent('STARTING_AUTO_RECONNECT');
+  
+  // Try to reconnect every 5 seconds
+  autoReconnectInterval = setInterval(() => {
+    logSocketEvent('AUTO_RECONNECT_ATTEMPT');
+    
+    // Close existing socket if any
+    if (socket) {
+      try {
+        socket.disconnect();
+      } catch (e) {
+        // Ignore errors on disconnect
+      }
+      socket = null;
+    }
+    
+    // Try to create a new connection
+    const newSocket = initializeSocket();
+    
+    if (newSocket && newSocket.connected) {
+      logSocketEvent('AUTO_RECONNECT_SUCCESSFUL');
+      
+      // Clear interval once connected
+      if (autoReconnectInterval) {
+        clearInterval(autoReconnectInterval);
+        autoReconnectInterval = null;
+      }
+    }
+  }, 5000);
+};
+
 export const getSocket = () => socket;
 
 export const closeSocket = () => {
@@ -148,6 +190,12 @@ export const closeSocket = () => {
     }
     socket = null;
     reconnectAttempts = 0;
+    
+    // Clear any auto reconnect interval
+    if (autoReconnectInterval) {
+      clearInterval(autoReconnectInterval);
+      autoReconnectInterval = null;
+    }
   }
 };
 

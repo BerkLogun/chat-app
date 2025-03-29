@@ -9,9 +9,13 @@ import { ChatHeader } from '@/components/chat/ChatHeader';
 import { MessageList } from '@/components/chat/MessageList';
 import { MessageInput } from '@/components/chat/MessageInput';
 import { ChatRoom, Message } from '@/lib/api/chat';
+import { useAuthStore } from '@/store/auth';
+import { userService } from '@/lib/api/user';
+import { ProfileModal } from '@/components/chat/ProfileModal';
 
 export default function ChatPage() {
   const { user } = useAuth();
+  const { setUser } = useAuthStore();
   const { 
     rooms, 
     currentRoom, 
@@ -20,7 +24,9 @@ export default function ChatPage() {
     markAsRead, 
     fetchMessages, 
     setCurrentRoom, 
-    fetchRooms 
+    fetchRooms, 
+    loading, 
+    markRoomAsRead: markRoomAsReadChatStore 
   } = useChatStore();
   
   const [showSidebar, setShowSidebar] = useState(false);
@@ -30,6 +36,7 @@ export default function ChatPage() {
   const [typingUsers, setTypingUsers] = useState<{[roomId: string]: {[userId: string]: {username: string, timestamp: number}}}>({});
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   
   // Function to ensure socket connection
   const ensureSocketConnection = useCallback(() => {
@@ -165,8 +172,47 @@ export default function ChatPage() {
       }
     };
     
+    // Listen for user profile updates
+    const handleUserStatusChange = (data: { userId: string, status?: string, username?: string }) => {
+      console.log('User status change received:', data);
+      
+      // Track whether rooms need to be refreshed
+      let needsRoomRefresh = false;
+      
+      // If this is the current user's update, update the auth store
+      if (data.userId === user?._id && user) {
+        console.log('Updating current user status:', data);
+        const updatedUser = {
+          ...user,
+          status: (data.status as 'online' | 'offline' | 'away') || user.status,
+          username: data.username || user.username
+        };
+        setUser(updatedUser);
+        needsRoomRefresh = true;
+      } else {
+        console.log('Received status update for another user:', data);
+        needsRoomRefresh = true;
+      }
+      
+      // Force refresh rooms if needed
+      if (needsRoomRefresh) {
+        console.log('Refreshing rooms to update user status:', data);
+        fetchRooms(true).then(() => {
+          console.log('Rooms refreshed with updated user data (forced refresh)');
+          
+          // If we're in a room, refresh messages to update sender names
+          if (currentRoom) {
+            refreshMessages();
+          }
+        }).catch(err => {
+          console.error('Error updating rooms after user status change:', err);
+        });
+      }
+    };
+    
     socket.on(socketEvents.RECEIVE_MESSAGE, handleNewMessage);
     socket.on(socketEvents.USER_TYPING, handleUserTyping);
+    socket.on(socketEvents.USER_STATUS_CHANGE, handleUserStatusChange);
 
     // Listen for chat list updates
     socket.on(socketEvents.UPDATE_CHAT_LIST, () => {
@@ -174,8 +220,8 @@ export default function ChatPage() {
       
       // Always fetch rooms to update room list with the latest data
       // This is critical for when messages are received while the user is not in the chat room
-      fetchRooms().then(() => {
-        console.log('Rooms list refreshed successfully');
+      fetchRooms(true).then(() => {
+        console.log('Rooms list refreshed successfully (forced refresh)');
         
         // If we're in a room, also refresh message list
         if (currentRoom) {
@@ -215,13 +261,14 @@ export default function ChatPage() {
     return () => {
       socket.off(socketEvents.RECEIVE_MESSAGE, handleNewMessage);
       socket.off(socketEvents.USER_TYPING, handleUserTyping);
+      socket.off(socketEvents.USER_STATUS_CHANGE, handleUserStatusChange);
       socket.off(socketEvents.UPDATE_CHAT_LIST);
       socket.off('disconnect');
       socket.off('connect');
       socket.off('connect_error');
       socket.off('error');
     };
-  }, [currentRoom, addMessage, fetchRooms, refreshMessages]);
+  }, [currentRoom, addMessage, fetchRooms, fetchMessages, refreshMessages, setUser, user]);
   
   // Mark messages as read when entering a room
   useEffect(() => {
@@ -394,8 +441,37 @@ export default function ChatPage() {
     return result;
   }, [typingUsers, user?._id]);
   
+  // Debug rooms updates
+  useEffect(() => {
+    console.log('Rooms updated:', rooms.length);
+    
+    // Log participant status for private chats
+    rooms.forEach(room => {
+      if (room.type === 'private') {
+        const otherParticipant = room.participants.find(p => {
+          if (typeof p === 'object' && p !== null && '_id' in p) {
+            return p._id !== user?._id;
+          }
+          return false;
+        });
+        
+        if (otherParticipant && typeof otherParticipant === 'object') {
+          console.log(`Room ${room._id} - Participant ${otherParticipant.username} status:`, otherParticipant.status);
+        }
+      }
+    });
+  }, [rooms, user?._id]);
+  
+  // Add a function to handle opening the profile modal
+  const openProfileModal = useCallback(() => {
+    setIsProfileModalOpen(true);
+  }, []);
+  
   return (
     <div className="fixed inset-0 w-full h-full flex bg-gray-100 dark:bg-gray-900">
+      {/* Profile Modal at the page level */}
+      <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+      
       {/* Sidebar - hidden on mobile unless showSidebar is true */}
       <div 
         className={`
@@ -411,6 +487,7 @@ export default function ChatPage() {
           onSelectRoom={handleSelectRoom}
           onClose={toggleSidebar}
           typingUsers={getSidebarTypingUsers()}
+          onOpenProfileModal={openProfileModal}
         />
       </div>
       
